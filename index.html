@@ -1,10 +1,505 @@
 <!DOCTYPE html>
 <html>
+
+<head>
+  <!-- <style> html { display: none; } </style> -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" , charset="utf-8" />
+  <link rel="stylesheet" href="styling.css">
+</head>
+
 <body>
 
-<h1>Dylan Sweeney's Homepage</h1>
 
-<p>....</p>
+  <script src="navbar.js">
+  </script>
 
+
+  <div id="search_replace">
+
+    <!-- <script src="search_screen.js">
+</script> -->
+
+  </div>
+
+
+  <script defer>
+
+    localStorage.search_type = "api";
+
+    function clean_results(title, url, snippet) {
+      var res = "";
+      res += '<div class= "result_bundle">';
+      res += '<input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">' + title + '</span><br>';
+      res += '<a id="result_link" href=' + url + ' rel="external">' + url + '</a>';
+      res += '<p id="result_snippet">' + snippet + '</p>';
+      res += '</div>';
+      return res;
+    }
+
+    function results_to_output(file_type) {
+      var articles = document.getElementsByClassName('result_bundle');
+      console.log(articles);
+      var empty = true;
+      if (file_type == 1) {
+        console.log("type JSON");
+        var str = '{\n"items": [\n';
+        var count = 0;
+        for (let i = 0; i < articles.length; i++) {
+          if (articles[i].children[0].checked == true) {
+            empty = false;
+            console.log("true");
+            if (count > 0) {
+              str += ",";
+            }
+            str += "{\n"
+            str += '"title": "' + articles[i].children[1].textContent.replace(/[^ -~]+/g, "") + '",\n';
+            str += '"link": "' + articles[i].children[3].textContent.replace(/[^ -~]+/g, "")+ '",\n';
+            str += '"snippet": "' + articles[i].children[4].textContent.replace(/[^ -~]+/g, "") + '"\n';
+            str += "}\n";
+            count++;
+          }
+        }
+        str += "]\n}";
+        if (empty == true) {
+          return "";
+        } else {
+          return str;
+        }
+      } else if (file_type == 2) {
+        console.log("type XML");
+        var str = '<?xml version="1.0" encoding="UTF-8"?>';
+        str+= "<results>";
+        for (let i = 0; i < articles.length; i++) {
+          if (articles[i].children[0].checked == true) {
+            empty = false;
+            str += "<result>\n"
+            str += '<title>' + articles[i].children[1].textContent.replace(/[^ -~]+/g, "") + '</title>\n';
+            str += '<url>' + articles[i].children[3].textContent.replace(/[^ -~]+/g, "") + '</url>\n';
+            str += '<description>' + articles[i].children[4].textContent.replace(/[^ -~]+/g, "") + '</description>\n';
+            str += '</result>\n';
+            count++;
+          }
+        }
+        str+= "</results>";
+        if (empty == true) {
+          return "";
+        } else {
+          return str;
+        }
+      } else if (file_type == 3) {
+        var str = "";
+        console.log("type CSV");
+        for (let i = 0; i < articles.length; i++) {
+          if (articles[i].children[0].checked == true) {
+            empty = false;
+            console.log("true");
+            str += '"' +articles[i].children[1].textContent.replace(/[^ -~]+/g, "").replace("'","\'").replace(/"/g, '\\"') + '",';
+            str += '"' +articles[i].children[3].textContent.replace(/[^ -~]+/g, "").replace("'","\'").replace(/"/g, '\\"')+ '",';
+            str += '"' +articles[i].children[4].textContent.replace(/[^ -~]+/g, "").replace("'","\'").replace(/"/g, '\\"') + '"\n';
+            count++;
+          }
+        }
+        console.log(str);
+        if (empty == true) {
+          return "";
+        } else {
+          return str;
+        }
+      }
+    }
+
+
+    function saveFile(filename, data, file_type) {
+      var blob = new Blob([data], {
+        type: file_type
+      });
+      if (window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+      } else {
+        var elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+      }
+    }
+
+    function checkExtension() {
+      if (hasExtension('fileUpload', ['.xml'])) {
+        return "xml";
+      } else if (hasExtension('fileUpload', ['.json'])) {
+        return "json";
+      } else if (hasExtension('fileUpload', ['.csv'])) {
+        return "csv";
+      } else {
+        return "none;"
+      }
+    }
+
+    function hasExtension(inputID, exts) {
+      var fileName = document.getElementById(inputID).value;
+      return (new RegExp('(' + exts.join('|').replace(/\./g, '\\.') + ')$')).test(fileName);
+    }
+
+    function init() {
+      var imgDefer = document.getElementsByTagName('img');
+      for (let i = 0; i < imgDefer.length; i++) {
+        if (imgDefer[i].getAttribute('data-src')) {
+          imgDefer[i].setAttribute('src', imgDefer[i].getAttribute('data-src'));
+        }
+      }
+    }
+    window.onload = init;
+
+
+    function handle_download(e){
+      e.stopPropagation();
+      e.preventDefault();
+      if (document.getElementById("json_opt").selected == true) {
+        var text1 = results_to_output(1);
+        var filename1 = "results.json";
+        saveFile(filename1, text1, 'text/json');
+      }
+      else if (document.getElementById("xml_opt").selected == true) {
+        var text2 = results_to_output(2);
+        var filename2 = "results.xml";
+        saveFile(filename2, text2, 'text/xml');
+      }
+      else if (document.getElementById("csv_opt").selected == true) {
+        var text3 = results_to_output(3);
+        var filename3 = "results.csv";
+        saveFile(filename3, text3, 'text/csv');
+      }
+    }
+
+    // ------------------------------------
+
+    function CSVtoArray(text) {
+      var re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+      var re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+      // Return NULL if input string is not well formed CSV string.
+      if (!re_valid.test(text)) return null;
+      var a = [];                     // Initialize array to receive values.
+      text.replace(re_value, // "Walk" the string using replace with callback.
+          function(m0, m1, m2, m3) {
+              // Remove backslash from \' in single quoted values.
+              if      (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+              // Remove backslash from \" in double quoted values.
+              else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+              else if (m3 !== undefined) a.push(m3);
+              return ''; // Return empty string.
+          });
+      // Handle special case of empty last value.
+      if (/,\s*$/.test(text)) a.push('');
+      return a;
+    };
+
+    function handleFileUpload(event) {
+      var FILE_KEY = 'save.json';
+      var save;
+      var extension = checkExtension();
+      if (extension == "none") {
+        console.log("Unsupported file type!")
+        return;
+      }
+
+      function handleFileRead(event) {
+        document.getElementById("search_replace").innerHTML =
+                '<h2 style.display="inline"> Results </h2> \
+                <span style="float:right;" id="select_span"> <input type="button" id="download" value="Download"/> \
+                  <select>\
+                  <option class="filetype_dropdown"  class="filetype" id="json_opt" value="JSON">JSON</option>\
+                  <option class="filetype_dropdown"  id ="xml_opt" value="XML">XML</option>\
+                  <option class="filetype_dropdown"  id ="csv_opt" value="CSV">CSV</option>\
+                  </select>\
+                </span> \
+                <input type="checkbox" class="select_all" id="select_box"> <label id="select_all_label" for="select_box">Select All</label>';
+        if (extension == "json") {
+          save = JSON.parse(event.target.result);
+          console.log(save);
+          window.localStorage.setItem(FILE_KEY, JSON.stringify(save));
+          
+          for (var i = 0; i < 10; i++) {
+            if (save.items[i] == null) {
+              break;
+            } else {
+              var item = save.items[i];
+              var cleaned = clean_results(item.title, item.link, item.snippet);
+              console.log(cleaned);
+              document.getElementById("search_replace").innerHTML += cleaned + '<br>';
+            }
+          }
+        } else if (extension == "xml") {
+          save = event.target.result;
+          console.log(save);
+          
+          titles = [];
+          urls = [];
+          descriptions = [];
+          $(save).find("title").each(function (index) {
+            titles.push($(this).text());
+            console.log($(this).text());
+          });
+          $(save).find("url").each(function (index) {
+            urls.push($(this).text());
+            console.log($(this).text());
+          });
+          $(save).find("description").each(function (index) {
+            descriptions.push($(this).text());
+            console.log($(this).text());
+          });
+          for (let i = 0; i < titles.length; i++) {
+            var cleaned = clean_results(titles[i], urls[i], descriptions[i]);
+            console.log(cleaned);
+            document.getElementById("search_replace").innerHTML += cleaned + '<br>';
+          }
+        } else if (extension == "csv") {
+          save = event.target.result;
+          console.log("------------------>\n"+save);
+          var obs = CSVtoArray(save);
+         
+          var lines = save.split('\n');
+          for(var i = 0; i < obs.length; i = i+3){
+            var cleaned = clean_results(obs[i], obs[i+1], obs[i+2]);
+            document.getElementById("search_replace").innerHTML += cleaned + '<br>';
+          }
+        }
+        document.getElementById("select_box").addEventListener('click',function(e){
+          var buttons = document.getElementsByClassName('result_bundle');
+          var state = document.getElementById("select_box").checked;
+            for (let i = 0; i < buttons.length; i++) {
+              buttons[i].children[0].checked = state;
+            }
+         } , false);
+        
+        document.getElementById("download").addEventListener("click", function (e) {
+          handle_download(e)
+        }, false);
+      };
+
+      var reader = new FileReader();
+      reader.onload = handleFileRead;
+
+      var file = event.target.files[0];
+      reader.readAsText(file); // fires onload when done.
+    }
+
+    function onButtonClick(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (localStorage.search_type == "api") {
+        var search_term = document.getElementById("form-search").value;
+        console.log("search term" + search_term);
+
+        function hndlr(response) {
+          console.log(response);
+        }
+
+        var request = new XMLHttpRequest();
+        request.open('GET',
+          'https://www.googleapis.com/customsearch/v1?key=AIzaSyCEBBFupUmouoat-rdXfbyLNKdaoqD1yKQ&cx=001757689536954560045:fmpgsykpuv8&q=' +
+          search_term);
+        request.onload = function () {
+          if (request.status >= 200 && request.status < 400) {
+            // Success!
+            var resp = request.responseText;
+            hndlr(resp);
+            document.getElementById("search_replace").innerHTML =
+            '<h2 style.display="inline"> Results </h2> <input type="checkbox" class="select_all" id="select_box"> <label id="select_all_label" for="select_box">Select All</label><input type="button" id="download" value="Download"/><select>\
+                  <option class="filetype_dropdown"  id ="json_opt" value="JSON">JSON</option>\
+                  <option class="filetype_dropdown"  id ="xml_opt" value="XML">XML</option>\
+                  <option class="filetype_dropdown"  id ="csv_opt" value="CSV">CSV</option>\
+                  </select>';
+
+            var obj = JSON.parse(resp);
+            
+            for (var i = 0; i < 10; i++) {
+              var item = obj.items[i];
+              var cleaned = clean_results(item.title, item.link, item.snippet);
+              document.getElementById("search_replace").innerHTML += cleaned + '<br>';
+              //document.getElementById("search_button").addEventListener('click', onButtonClick);
+            }
+          } else {}
+        };
+
+        request.onerror = function () {};
+        request.send();
+
+
+      } else if (localStorage.search_type == "fixed") {
+        search_function();
+
+      }
+      // search_function();
+      document.addEventListener('click', function(e){
+        if(e.target.id =="select_box"){
+          var buttons = document.getElementsByClassName('result_bundle');
+          var state = document.getElementById("select_box").checked;
+            for (let i = 0; i < buttons.length; i++) {
+              buttons[i].children[0].checked = state;
+            }
+        }
+      } , false);
+               
+      document.addEventListener('click',function(e){
+          console.log("target: "+e.target);
+          console.og("target id: "+e.target.id);
+          if(e.target && e.target.id == 'download'){
+            handle_download(e);
+          }
+      }, false);
+                
+    }
+
+    function display_upload() {
+      return '<div id="upload_button"> <h2> Upload Results </h2> <input type="file" name="files[]" id="fileUpload"> </div>'
+    }
+
+
+    function display_search() {
+      return '<div class="google">\
+        <a href="#" id="sara_logo"><img src="sara.png" defer> </img></a>\
+        </div>\
+        <!-- FORM SEARCH -->\
+        <div class="form">\
+        <form>\
+          <label for="form-search"> </label>\
+          <input type="text" id="form-search"><br>\
+        </form>\
+        </div>\
+        <!-- BUTTONS -->\
+        <div class="buttons">\
+        <input id="search_button" type="button" value=" Sara Search" id="google_search">\
+        </div>';
+    }
+
+
+    function search_function() {
+      document.getElementById("search_replace").innerHTML =
+      '<h2 style.display="inline"> Results </h2> <input type="checkbox" class="select_all" id="select_box"> <label id="select_all_label" for="select_box">Select All</label><input type="button" id="download" value="Download"/><select>\
+                  <option class="filetype_dropdown"  id ="json_opt" value="JSON">JSON</option>\
+                  <option class="filetype_dropdown"  id ="xml_opt" value="XML">XML</option>\
+                  <option class="filetype_dropdown"  id ="csv_opt" value="CSV">CSV</option>\
+                  </select>'+ '<div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">The Talking Heads</span><br>  <a id="result_link"  href="https://en.wikipedia.org/wiki/Talking_Heads" rel="external">wikipedia.org/wiki/Talking_Heads</a>            <p id="result_snippet">Talking Heads were an American rock band formed in 1975 in New York City and active until 1991.</p>          </div>                     <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">The Cure</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/The_Cure" rel="external">wikipedia.org/wiki/The_Cure</a>            <p id="result_snippet">The Cure are an English rock band formed in Crawley in 1976.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">New Order</a></span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/New_Order_(band)" rel="external">wikipedia.org/wiki/New_Order_(band)</a>            <p id="result_snippet">New Order are an English rock band formed in 1980 by vocalist and guitarist Bernard Sumner, bassist Peter Hook, and drummer Stephen Morris.</p>          </div>              <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Depeche Mode</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Depeche_Mode" rel="external">wikipedia.org/wiki/Depeche_Mode</a>            <p id="result_snippet">Depeche Mode are an English electronic band formed in Basildon, Essex, in 1980.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">The Police</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/The_Police" rel="external">wikipedia.org/wiki/The_Police</a>            <p id="result_snippet">The Police were a British rock band formed in London in 1977 led by frontman Sting.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Blondie</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Blondie_(band)" rel="external">.wikipedia.org/wiki/Blondie_(band)</a>            <p id="result_snippet">Blondie is an American rock band founded by singer Debbie Harry and guitarist Chris Stein.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Devo</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Devo" rel="external">wikipedia.org/wiki/Devo</a>            <p id="result_snippet">Devo is an American rock band from Akron, Ohio formed in 1973.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Duran Duran</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Duran_Duran" rel="external">wikipedia.org/wiki/Duran_Duran</a>            <p id="result_snippet">Duran Duran are an English new wave and synth-pop band formed in Birmingham in 1978.</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Men at Work</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Men_at_Work" rel="external">wikipedia.org/wiki/Men_at_Work</a>            <p id="result_snippet">Men at Work were an Australian rock band formed in 1979 and best known for their 1981 hit "Down Under".</p>          </div>                                      <div class= "result_bundle"><input type="checkbox" class="res_box" id="check_box" name="band"> <span id="result_title">Siouxsie and the Banshees</span><br>            <a id="result_link"  href="https://en.wikipedia.org/wiki/Siouxsie_and_the_Banshees" rel="external">wikipedia.org/wiki/Siouxsie_and_the_Banshees</a>            <p id="result_snippet">Siouxsie and the Banshees were an English rock band, formed in London in 1976 by vocalist Siouxsie Sioux and bass guitarist Steven Severin.</p>          </div>              </ul>    </list>  </span><br>'
+    }
+    // value="new wave bands" readonly\
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+      document.getElementById("search_replace").innerHTML = display_search();
+      document.getElementById("form-search").value = "";
+      document.getElementById("form-search").readOnly = false;
+
+      document.getElementById("about").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var txt =
+          "<h2>Developer: </h2><p>Name: Dylan Sweeney</p><p>About: I am currently a senior at CUNY Queens College pursuing a B.S in Computer Science.</p>";
+        txt += "<h2>Contact: </h2><p><a href='mailto:dylanjamessweeney@gmail.com'>dylanjamessweeney[@]gmail[dot]com</a></p>";
+        document.getElementById("search_replace").innerHTML = txt;
+      });
+
+      document.getElementById("nav").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.getElementById("search_replace").innerHTML = "App Name: " + navigator.appName +
+          "<br><br>Product: " + navigator.product + "<br><br>App Version: " +
+          navigator.appVersion + "<br><br>Browser Agent: " + navigator.userAgent + "<br><br>Platform: " +
+          navigator.platform + "<br><br>Language of the browser: " + navigator.language;
+      });
+
+      document.getElementById("wind").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        document.getElementById("search_replace").innerHTML = "Width: " + w + "<br>Height: " + h;
+      });
+
+      document.getElementById("screen").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var txt = "";
+        txt += "<p>Total width/height: " + screen.width + "*" + screen.height + "</p>";
+        txt += "<p>Available width/height: " + screen.availWidth + "*" + screen.availHeight + "</p>";
+        txt += "<p>Color depth: " + screen.colorDepth + "</p>";
+        txt += "<p>Pixel depth: " + screen.pixelDepth + "</p>";
+        document.getElementById("search_replace").innerHTML = txt;
+      });
+
+      document.getElementById("location").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var x = location.href;
+        var y = location.hostname;
+        var z = location.pathname;
+        var b = location.protocol;
+        var txt = "";
+        txt += "<p>Href: " + x + "</p>";
+        txt += "<p>Hostname: " + y + "</p>";
+        txt += "<p>Pathname: " + z + "</p>";
+        txt += "<p>Protocol: " + b + "</p>";
+        document.getElementById("search_replace").innerHTML = txt;
+      });
+
+      document.getElementById("geolocation").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        var options = {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        };
+
+        function success(pos) {
+          var crd = pos.coords;
+          document.getElementById("search_replace").innerHTML = "Latitude: " + crd.latitude +
+            "<br><br>Longitude: " + crd.longitude;
+        }
+
+        function error(err) {
+          document.getElementById("search_replace").innerHTML = txt;
+        }
+
+        navigator.geolocation.getCurrentPosition(success, error, options);
+
+      });
+
+      document.getElementById("search_fixed").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.getElementById("search_replace").innerHTML = display_search();
+        document.getElementById("form-search").value = "new wave bands";
+        document.getElementById("form-search").readOnly = true;
+        localStorage.search_type = "fixed";
+        document.getElementById("search_button").addEventListener('click', onButtonClick);
+      });
+
+      document.getElementById("search_api").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.getElementById("search_replace").innerHTML = display_search();
+        document.getElementById("form-search").value = "";
+        document.getElementById("form-search").readOnly = false;
+        localStorage.search_type = "api";
+        document.getElementById("search_button").addEventListener('click', onButtonClick);
+      });
+
+      document.getElementById("search_upload").addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.getElementById("search_replace").innerHTML = display_upload();
+        localStorage.search_type = "";
+        // add listener for upload button
+        document.querySelector('#fileUpload').addEventListener('change', handleFileUpload, false);
+      });
+
+      document.getElementById("search_button").addEventListener('click', onButtonClick);
+    });
+  </script>
 </body>
+
 </html>
