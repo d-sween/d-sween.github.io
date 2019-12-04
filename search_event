@@ -1,0 +1,3 @@
+function search_function() {
+     document.getElementById("search_replace").innerHTML = "hello";
+ };

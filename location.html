@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styling.css">
+
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="dropdown">
+      <button class="dropbtn">Search
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a class="active" href="index.html">Search</a>
+      </div>
+    </div>
+
+
+    <div class="dropdown">
+      <button class="dropbtn">Course
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="https://learn.zybooks.com/zybook/CUNYCSCI355TeitelmanSpring2019">Zybooks</a>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="dropbtn">Browser
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="navigator.html" id="nav">Navigator</a>
+        <a href="window.html" id="wind">Window</a>
+        <a href="screen.html" id="screen">Screen</a>
+        <a href="location.html" id="location">Location</a>
+        <a href="geolocation.html" id="geoloc">Geolocation</a>
+
+      </div>
+    </div>
+
+
+    <div class="dropdown">
+      <button class="dropbtn">About
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="about.html">About</a>
+      </div>
+    </div>
+  </div>
+
+
+
+  <p></p>
+
+
+<script type="text/javascript" >
+
+  var x = location.href;
+  var y = location.hostname;
+  var z = location.pathname;
+  var b = location.protocol;
+  var txt = "";
+  txt += "<p>Href: " + x + "</p>";
+  txt += "<p>Hostname: " + y + "</p>";
+  txt += "<p>Pathname: " + z + "</p>";
+  txt += "<p>Protocol: " + b + "</p>";
+  document.getElementsByTagName("p")[0].innerHTML = txt;
+
+
+</script>
+
+  </body>
+
+
+
+
+  </html>
